@@ -5,6 +5,7 @@ This workspace contains two separate iOS apps plus one shared Swift package:
 - `ChatGPTCoffeeApp/`: ChatGPT-like app that starts HSBC consent and later pays for coffee.
 - `HSBCBankingMockApp/`: HSBC Mobile Banking mock that approves consent and issues a mock OAuth token.
 - `SharedOpenBankingKit/`: shared Swift package used by both apps.
+- `MockOpenBankingMCP/`: mock Open Banking, commerce/travel APIs, and MCP tool definitions for ChatGPT scenarios.
 
 ## Open In Xcode
 
@@ -28,3 +29,7 @@ import SharedOpenBankingKit
 4. Tap `Open HSBC`.
 5. Approve consent in the banking app.
 6. Return to chat and type `I am tired, I want coffee`.
+
+## Design
+
+See [DESIGN.md](DESIGN.md) for the full architecture and data model summary. See [DIAGRAMS.md](DIAGRAMS.md) for standalone component and sequence diagrams.

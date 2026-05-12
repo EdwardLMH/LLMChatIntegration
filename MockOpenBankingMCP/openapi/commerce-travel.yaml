@@ -1,0 +1,63 @@
+openapi: 3.1.0
+info:
+  title: Commerce and Travel Mock API
+  version: 0.1.0
+servers:
+  - url: https://mock-commerce.local
+paths:
+  /coffee/shops:
+    get:
+      operationId: searchCoffeeShops
+      summary: Search nearby coffee shops.
+      parameters:
+        - name: latitude
+          in: query
+          schema:
+            type: number
+        - name: longitude
+          in: query
+          schema:
+            type: number
+        - name: mood
+          in: query
+          schema:
+            type: string
+            example: tired
+      responses:
+        "200":
+          description: Coffee shop results.
+  /coffee/orders:
+    post:
+      operationId: createCoffeeOrder
+      summary: Create a coffee order before payment.
+      responses:
+        "201":
+          description: Coffee order created.
+  /hotels/search:
+    post:
+      operationId: searchHotels
+      summary: Search hotels for destination and dates.
+      responses:
+        "200":
+          description: Hotel results.
+  /hotels/bookings:
+    post:
+      operationId: createHotelBooking
+      summary: Hold a hotel booking before payment.
+      responses:
+        "201":
+          description: Hotel booking hold created.
+  /flights/search:
+    post:
+      operationId: searchFlights
+      summary: Search flights for origin, destination, dates, and passengers.
+      responses:
+        "200":
+          description: Flight results.
+  /flights/bookings:
+    post:
+      operationId: createFlightBooking
+      summary: Hold a flight booking before payment.
+      responses:
+        "201":
+          description: Flight booking hold created.

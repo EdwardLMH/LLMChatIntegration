@@ -1,0 +1,11 @@
+[
+  {
+    "id": "hotel-hsbc-bund",
+    "name": "The Bund Business Hotel",
+    "district": "Shanghai Bund",
+    "rooms": [
+      { "id": "deluxe-king", "name": "Deluxe King", "price": 980, "currencyCode": "CNY" },
+      { "id": "river-view", "name": "River View Room", "price": 1280, "currencyCode": "CNY" }
+    ]
+  }
+]

@@ -1,0 +1,313 @@
+openapi: 3.1.0
+info:
+  title: HSBC Open Banking Mock API
+  version: 0.1.0
+  description: Mock API contract for ChatGPT-led consent, HSBC DSP authorization, and payment journeys.
+servers:
+  - url: https://mock.hsbc.local/open-banking
+paths:
+  /consents:
+    post:
+      operationId: createConsent
+      summary: Create an Open Banking consent request.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateConsentRequest"
+      responses:
+        "201":
+          description: Consent link created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConsentLink"
+  /oauth/token:
+    post:
+      operationId: exchangeAuthorizationCode
+      summary: Exchange authorization code for OAuth token after HSBC app authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OAuthTokenRequest"
+      responses:
+        "200":
+          description: Token issued.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OAuthTokenResponse"
+  /payment-quotes:
+    post:
+      operationId: createPaymentQuote
+      summary: Quote a payment before final user confirmation.
+      security:
+        - oauth: [payment-quote:create]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PaymentQuoteRequest"
+      responses:
+        "201":
+          description: Payment quote created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentQuote"
+  /dsp/payment-authorizations:
+    post:
+      operationId: authorizePaymentWithDSP
+      summary: Ask HSBC DSP Authorization Agent to authorize a specific payment quote.
+      security:
+        - oauth: [dsp-payment:authorize]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DSPPaymentAuthorizationRequest"
+      responses:
+        "201":
+          description: DSP authorization decision returned.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DSPPaymentAuthorization"
+  /payments:
+    post:
+      operationId: submitPayment
+      summary: Submit payment after user confirmation and HSBC DSP authorization.
+      security:
+        - oauth: [coffee-payment:submit]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubmitPaymentRequest"
+      responses:
+        "201":
+          description: Payment accepted.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentReceipt"
+  /payments/{paymentId}:
+    get:
+      operationId: getPaymentStatus
+      summary: Get payment status.
+      security:
+        - oauth: [accounts:read]
+      parameters:
+        - name: paymentId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Payment status.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentReceipt"
+components:
+  securitySchemes:
+    oauth:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://mock.hsbc.local/oauth/authorize
+          tokenUrl: https://mock.hsbc.local/open-banking/oauth/token
+          scopes:
+            accounts:read: Read account mask and consent state.
+            payment-quote:create: Create payment quote.
+            dsp-payment:authorize: Authorize one payment through HSBC DSP Authorization Agent.
+            coffee-payment:submit: Submit coffee payment.
+            travel-payment:submit: Submit flight or hotel payment.
+  schemas:
+    CreateConsentRequest:
+      type: object
+      required: [clientId, redirectUri, scopes, validityDays]
+      properties:
+        clientId:
+          type: string
+          example: chatgpt-commerce
+        redirectUri:
+          type: string
+          format: uri
+          example: chatgpt://hsbc/consent-callback
+        scopes:
+          type: array
+          items:
+            type: string
+        merchantCategories:
+          type: array
+          items:
+            type: string
+        validityDays:
+          type: integer
+          example: 30
+    ConsentLink:
+      type: object
+      required: [consentId, authorizationUrl, expiresAt]
+      properties:
+        consentId:
+          type: string
+          format: uuid
+        authorizationUrl:
+          type: string
+          format: uri
+        expiresAt:
+          type: string
+          format: date-time
+    OAuthTokenRequest:
+      type: object
+      required: [grantType, code, redirectUri, codeVerifier]
+      properties:
+        grantType:
+          type: string
+          enum: [authorization_code]
+        code:
+          type: string
+        redirectUri:
+          type: string
+          format: uri
+        codeVerifier:
+          type: string
+    OAuthTokenResponse:
+      type: object
+      required: [accessToken, refreshToken, tokenType, expiresIn, scopes, consentId, accountMask]
+      properties:
+        accessToken:
+          type: string
+        refreshToken:
+          type: string
+        tokenType:
+          type: string
+          enum: [Bearer]
+        expiresIn:
+          type: integer
+        scopes:
+          type: array
+          items:
+            type: string
+        consentId:
+          type: string
+          format: uuid
+        accountMask:
+          type: string
+          example: "1234"
+    PaymentQuoteRequest:
+      type: object
+      required: [consentId, merchantId, orderId, amount, currencyCode, purpose]
+      properties:
+        consentId:
+          type: string
+          format: uuid
+        merchantId:
+          type: string
+        orderId:
+          type: string
+        amount:
+          type: number
+        currencyCode:
+          type: string
+        purpose:
+          type: string
+          enum: [coffee, hotel, flight]
+    PaymentQuote:
+      type: object
+      required: [quoteId, amount, currencyCode, expiresAt, riskDecision]
+      properties:
+        quoteId:
+          type: string
+        amount:
+          type: number
+        currencyCode:
+          type: string
+        expiresAt:
+          type: string
+          format: date-time
+        riskDecision:
+          type: string
+          enum: [allow, step_up_required, decline]
+    SubmitPaymentRequest:
+      type: object
+      required: [quoteId, dspAuthorizationId, idempotencyKey]
+      properties:
+        quoteId:
+          type: string
+        dspAuthorizationId:
+          type: string
+          description: Authorization reference returned by HSBC DSP Authorization Agent.
+        idempotencyKey:
+          type: string
+    DSPPaymentAuthorizationRequest:
+      type: object
+      required: [quoteId, consentId, orderId, amount, currencyCode, purpose, userConfirmation, biometricAssertion]
+      properties:
+        quoteId:
+          type: string
+        consentId:
+          type: string
+          format: uuid
+        orderId:
+          type: string
+        amount:
+          type: number
+        currencyCode:
+          type: string
+        purpose:
+          type: string
+          enum: [coffee, hotel, flight]
+        userConfirmation:
+          type: string
+          enum: [typed_confirm, pay_button]
+        biometricAssertion:
+          type: string
+          description: Mock signed assertion from facial verification.
+    DSPPaymentAuthorization:
+      type: object
+      required: [dspAuthorizationId, quoteId, decision, authorizedAt, expiresAt]
+      properties:
+        dspAuthorizationId:
+          type: string
+        quoteId:
+          type: string
+        decision:
+          type: string
+          enum: [approved, step_up_required, declined]
+        riskScore:
+          type: integer
+          minimum: 0
+          maximum: 100
+        authorizedAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+    PaymentReceipt:
+      type: object
+      required: [paymentId, paymentReference, status, amount, currencyCode, paidAt]
+      properties:
+        paymentId:
+          type: string
+        paymentReference:
+          type: string
+        status:
+          type: string
+          enum: [processing, paid, failed]
+        amount:
+          type: number
+        currencyCode:
+          type: string
+        paidAt:
+          type: string
+          format: date-time

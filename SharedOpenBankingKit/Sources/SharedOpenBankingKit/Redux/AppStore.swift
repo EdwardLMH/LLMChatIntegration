@@ -123,7 +123,8 @@ public final class AppStore: ObservableObject {
             }
             guard let order = state.currentOrder, case let .connected(token) = state.consentStatus else { return }
             state.isLoading = true
-            Task { await pay(order: order, token: token) }
+            appendAssistant("Facial verification passed. I am calling HSBC DSP Authorization Agent through MCP to authorize this payment.")
+            Task { await authorizeAndPay(order: order, token: token) }
 
         case let .paymentCompleted(result):
             state.isLoading = false
@@ -178,8 +179,16 @@ public final class AppStore: ObservableObject {
         }
     }
 
-    private func pay(order: CoffeeOrder, token: OAuthToken) async {
+    private func authorizeAndPay(order: CoffeeOrder, token: OAuthToken) async {
         do {
+            let authorization = try await environment.dspAuthorizationService.authorizePayment(
+                order: order,
+                token: token,
+                biometricAssertion: "mock-face-assertion"
+            )
+            guard authorization.decision == .approved else {
+                throw AppError.paymentDeclined
+            }
             let receipt = try await environment.paymentService.pay(order: order, token: token)
             reduce(.paymentCompleted(.success(receipt)))
         } catch {

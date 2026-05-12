@@ -4,6 +4,29 @@ public protocol PaymentServicing {
     func pay(order: CoffeeOrder, token: OAuthToken) async throws -> PaymentReceipt
 }
 
+public protocol DSPAuthorizationServicing {
+    func authorizePayment(order: CoffeeOrder, token: OAuthToken, biometricAssertion: String) async throws -> DSPPaymentAuthorization
+}
+
+public struct MockDSPAuthorizationService: DSPAuthorizationServicing {
+    public init() {}
+
+    public func authorizePayment(order: CoffeeOrder, token: OAuthToken, biometricAssertion: String) async throws -> DSPPaymentAuthorization {
+        guard token.scopes.contains(.authorizeDSPPayment) else {
+            throw AppError.missingConsent
+        }
+        guard !biometricAssertion.isEmpty else {
+            throw AppError.biometricFailed
+        }
+
+        return DSPPaymentAuthorization(
+            orderId: order.id,
+            decision: .approved,
+            riskScore: 18
+        )
+    }
+}
+
 public struct MockPaymentService: PaymentServicing {
     public init() {}
 

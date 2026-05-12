@@ -1,0 +1,22 @@
+[
+  {
+    "id": "starbucks-nanjing-rd",
+    "name": "Starbucks Nanjing Road",
+    "distanceMeters": 180,
+    "estimatedPickupMinutes": 8,
+    "menu": [
+      { "id": "latte-grande", "name": "Grande Latte", "price": 32, "currencyCode": "CNY" },
+      { "id": "americano-tall", "name": "Tall Americano", "price": 25, "currencyCode": "CNY" }
+    ]
+  },
+  {
+    "id": "luckin-people-square",
+    "name": "Luckin Coffee People's Square",
+    "distanceMeters": 260,
+    "estimatedPickupMinutes": 6,
+    "menu": [
+      { "id": "coconut-latte", "name": "Coconut Latte", "price": 19, "currencyCode": "CNY" },
+      { "id": "oat-flat-white", "name": "Oat Flat White", "price": 23, "currencyCode": "CNY" }
+    ]
+  }
+]

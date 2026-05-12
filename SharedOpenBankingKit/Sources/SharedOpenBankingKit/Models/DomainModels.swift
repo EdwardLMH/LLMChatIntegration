@@ -47,7 +47,9 @@ public struct OAuthToken: Identifiable, Codable, Equatable {
 public enum HSBCScope: String, Codable, CaseIterable, Equatable {
     case readAccounts = "accounts:read"
     case createPaymentQuote = "payment-quote:create"
+    case authorizeDSPPayment = "dsp-payment:authorize"
     case submitCoffeePayment = "coffee-payment:submit"
+    case submitTravelPayment = "travel-payment:submit"
 }
 
 public struct ConsentRequest: Identifiable, Codable, Equatable {
@@ -188,6 +190,40 @@ public struct PaymentReceipt: Identifiable, Codable, Equatable {
     public let amount: Decimal
     public let currencyCode: String
     public let paidAt: Date
+}
+
+public struct DSPPaymentAuthorization: Identifiable, Codable, Equatable {
+    public let id: UUID
+    public let quoteId: UUID
+    public let orderId: UUID
+    public let decision: DSPAuthorizationDecision
+    public let riskScore: Int
+    public let authorizedAt: Date
+    public let expiresAt: Date
+
+    public init(
+        id: UUID = UUID(),
+        quoteId: UUID = UUID(),
+        orderId: UUID,
+        decision: DSPAuthorizationDecision,
+        riskScore: Int,
+        authorizedAt: Date = Date(),
+        expiresAt: Date = Date().addingTimeInterval(180)
+    ) {
+        self.id = id
+        self.quoteId = quoteId
+        self.orderId = orderId
+        self.decision = decision
+        self.riskScore = riskScore
+        self.authorizedAt = authorizedAt
+        self.expiresAt = expiresAt
+    }
+}
+
+public enum DSPAuthorizationDecision: String, Codable, Equatable {
+    case approved
+    case stepUpRequired
+    case declined
 }
 
 public struct ChatMessage: Identifiable, Codable, Equatable {

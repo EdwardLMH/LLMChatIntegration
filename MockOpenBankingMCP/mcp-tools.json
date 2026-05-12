@@ -1,0 +1,164 @@
+{
+  "server": {
+    "name": "hsbc-commerce-dsp-mcp",
+    "version": "0.1.0",
+    "description": "MCP tool layer provided by HSBC developers for ChatGPT shopping, travel, Open Banking consent, and HSBC DSP Authorization Agent payment journeys."
+  },
+  "tools": [
+    {
+      "name": "hsbc_create_consent_link",
+      "description": "Use when the user asks to bind or connect HSBC. Creates an HSBC app authorization link for consent and OAuth token issuance.",
+      "input_schema": {
+        "type": "object",
+        "required": ["requestedScopes", "merchantCategories"],
+        "properties": {
+          "requestedScopes": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "merchantCategories": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "validityDays": {
+            "type": "integer",
+            "default": 30
+          }
+        }
+      }
+    },
+    {
+      "name": "commerce_search_coffee",
+      "description": "Use when the user wants coffee, mentions tiredness, caffeine, nearby cafes, Starbucks, Luckin, or asks for a drink recommendation.",
+      "input_schema": {
+        "type": "object",
+        "required": ["locationHint"],
+        "properties": {
+          "locationHint": { "type": "string" },
+          "mood": { "type": "string" },
+          "weatherSummary": { "type": "string" }
+        }
+      }
+    },
+    {
+      "name": "commerce_create_coffee_order",
+      "description": "Use after the user selects a shop and menu item. Creates an unpaid coffee order card.",
+      "input_schema": {
+        "type": "object",
+        "required": ["shopId", "itemId", "quantity"],
+        "properties": {
+          "shopId": { "type": "string" },
+          "itemId": { "type": "string" },
+          "size": { "type": "string" },
+          "quantity": { "type": "integer" }
+        }
+      }
+    },
+    {
+      "name": "travel_search_hotels",
+      "description": "Use when the user wants to book a hotel, stay overnight, find accommodation, or compare rooms.",
+      "input_schema": {
+        "type": "object",
+        "required": ["destination", "checkInDate", "checkOutDate"],
+        "properties": {
+          "destination": { "type": "string" },
+          "checkInDate": { "type": "string", "format": "date" },
+          "checkOutDate": { "type": "string", "format": "date" },
+          "guests": { "type": "integer" },
+          "budget": { "type": "number" }
+        }
+      }
+    },
+    {
+      "name": "travel_create_hotel_booking",
+      "description": "Use after the user selects a hotel and room. Creates an unpaid booking hold.",
+      "input_schema": {
+        "type": "object",
+        "required": ["hotelId", "roomId", "guestName"],
+        "properties": {
+          "hotelId": { "type": "string" },
+          "roomId": { "type": "string" },
+          "guestName": { "type": "string" }
+        }
+      }
+    },
+    {
+      "name": "travel_search_flights",
+      "description": "Use when the user wants to book or search flights, airfare, airline tickets, or travel between cities.",
+      "input_schema": {
+        "type": "object",
+        "required": ["origin", "destination", "departureDate"],
+        "properties": {
+          "origin": { "type": "string" },
+          "destination": { "type": "string" },
+          "departureDate": { "type": "string", "format": "date" },
+          "returnDate": { "type": "string", "format": "date" },
+          "passengers": { "type": "integer" },
+          "cabin": { "type": "string" }
+        }
+      }
+    },
+    {
+      "name": "travel_create_flight_booking",
+      "description": "Use after the user selects a flight itinerary. Creates an unpaid flight booking hold.",
+      "input_schema": {
+        "type": "object",
+        "required": ["itineraryId", "passengerName"],
+        "properties": {
+          "itineraryId": { "type": "string" },
+          "passengerName": { "type": "string" }
+        }
+      }
+    },
+    {
+      "name": "hsbc_create_payment_quote",
+      "description": "Use after an unpaid order or booking exists and before final payment confirmation.",
+      "input_schema": {
+        "type": "object",
+        "required": ["consentId", "merchantId", "orderId", "amount", "currencyCode", "purpose"],
+        "properties": {
+          "consentId": { "type": "string" },
+          "merchantId": { "type": "string" },
+          "orderId": { "type": "string" },
+          "amount": { "type": "number" },
+          "currencyCode": { "type": "string" },
+          "purpose": { "type": "string", "enum": ["coffee", "hotel", "flight"] }
+        }
+      }
+    },
+    {
+      "name": "hsbc_dsp_authorize_payment",
+      "description": "Use after the user explicitly confirms payment. Calls HSBC DSP Authorization Agent to evaluate risk, bind the payment quote to the user, and return a DSP authorization reference. Biometric verification may be required before this tool returns approved.",
+      "input_schema": {
+        "type": "object",
+        "required": ["quoteId", "consentId", "orderId", "amount", "currencyCode", "purpose", "userConfirmation", "biometricAssertion"],
+        "properties": {
+          "quoteId": { "type": "string" },
+          "consentId": { "type": "string" },
+          "orderId": { "type": "string" },
+          "amount": { "type": "number" },
+          "currencyCode": { "type": "string" },
+          "purpose": { "type": "string", "enum": ["coffee", "hotel", "flight"] },
+          "userConfirmation": { "type": "string", "enum": ["typed_confirm", "pay_button"] },
+          "biometricAssertion": {
+            "type": "string",
+            "description": "Signed assertion from the trusted facial verification boundary."
+          }
+        }
+      }
+    },
+    {
+      "name": "hsbc_submit_payment",
+      "description": "Use only after HSBC DSP Authorization Agent approves the payment and returns a dspAuthorizationId.",
+      "input_schema": {
+        "type": "object",
+        "required": ["quoteId", "dspAuthorizationId", "idempotencyKey"],
+        "properties": {
+          "quoteId": { "type": "string" },
+          "dspAuthorizationId": { "type": "string" },
+          "idempotencyKey": { "type": "string" }
+        }
+      }
+    }
+  ]
+}

@@ -14,7 +14,7 @@ public struct MockConsentService: ConsentServicing {
             clientId: clientId,
             redirectURL: URL(string: "hsbc-mobile://open-banking/consent")!,
             callbackURL: URL(string: "chatgpt://hsbc/consent-callback")!,
-            scopes: [.readAccounts, .createPaymentQuote, .submitCoffeePayment],
+            scopes: [.readAccounts, .createPaymentQuote, .authorizeDSPPayment, .submitCoffeePayment],
             merchantCategories: ["coffee", "food-and-beverage"],
             validityDays: 30
         )
@@ -49,7 +49,7 @@ public struct MockOAuthTokenIssuer: OAuthTokenIssuing {
 public enum ConsentCallbackParser {
     public static func tokenFromSuccessfulCallback(
         accountMask: String = "1234",
-        scopes: [HSBCScope] = [.readAccounts, .createPaymentQuote, .submitCoffeePayment],
+        scopes: [HSBCScope] = [.readAccounts, .createPaymentQuote, .authorizeDSPPayment, .submitCoffeePayment],
         consentId: UUID = UUID()
     ) -> OAuthToken {
         OAuthToken(

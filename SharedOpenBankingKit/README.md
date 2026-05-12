@@ -14,7 +14,7 @@ Native SwiftUI scaffold for two apps and two ChatGPT-led journeys:
 - `Redux/`: ChatGPT-like app state, actions, reducer/store, and service dependencies.
 - `BankingApp/`: HSBC mock banking app state, reducer/store, consent review UI, face verification, and OAuth callback.
 - `Routing/AppURLRouter.swift`: app-to-app URL contract for `hsbc-mobile://...` consent requests and `chatgpt://...` token callbacks.
-- `Services/`: mocked HSBC consent, OAuth token issuance, merchant discovery, weather, payment, and biometric boundaries.
+- `Services/`: mocked HSBC consent, OAuth token issuance, merchant discovery, weather, HSBC DSP payment authorization, payment, and biometric boundaries.
 - `Views/`: native SwiftUI chat UI, HSBC binding card, shop carousel, order card, facial verification sheet, and receipt card.
 
 ## How To Use In Xcode
@@ -72,4 +72,4 @@ Replace `.preview` with real service implementations when HSBC Open Banking, MCP
 - The HSBC OAuth access token is modeled in `OAuthToken`, but real storage should use Keychain and server-side token exchange.
 - The production consent journey should prefer universal links and OAuth authorization code + PKCE. This mock uses custom schemes for local prototyping.
 - `LocalBiometricAuthorizer` wraps iOS `LocalAuthentication`; in production the HSBC or trusted payment boundary should own biometric policy and risk checks.
-- The mock payment service only proves state flow. A real implementation should call the HSBC payment orchestration endpoint with consent ID, payment quote, idempotency key, merchant order ID, amount, currency, and risk context.
+- The mock payment path first calls `DSPAuthorizationServicing`, then `PaymentServicing`. A real implementation should call HSBC DSP Authorization Agent through MCP for a `dspAuthorizationId`, then submit payment through HSBC Open Banking with consent ID, payment quote, idempotency key, merchant order ID, amount, currency, and risk context.

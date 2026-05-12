@@ -1,0 +1,238 @@
+import Foundation
+
+public enum Journey: String, Codable, Equatable {
+    case hsbcConsent
+    case coffeeOrder
+}
+
+public enum ConsentStatus: Equatable {
+    case disconnected
+    case pendingRedirect
+    case authorizing
+    case connected(OAuthToken)
+    case failed(String)
+}
+
+public struct OAuthToken: Identifiable, Codable, Equatable {
+    public let id: UUID
+    public let accessToken: String
+    public let refreshToken: String
+    public let scopes: [HSBCScope]
+    public let issuedAt: Date
+    public let expiresAt: Date
+    public let accountMask: String
+    public let consentId: UUID
+
+    public init(
+        id: UUID = UUID(),
+        accessToken: String,
+        refreshToken: String,
+        scopes: [HSBCScope],
+        issuedAt: Date,
+        expiresAt: Date,
+        accountMask: String,
+        consentId: UUID = UUID()
+    ) {
+        self.id = id
+        self.accessToken = accessToken
+        self.refreshToken = refreshToken
+        self.scopes = scopes
+        self.issuedAt = issuedAt
+        self.expiresAt = expiresAt
+        self.accountMask = accountMask
+        self.consentId = consentId
+    }
+}
+
+public enum HSBCScope: String, Codable, CaseIterable, Equatable {
+    case readAccounts = "accounts:read"
+    case createPaymentQuote = "payment-quote:create"
+    case submitCoffeePayment = "coffee-payment:submit"
+}
+
+public struct ConsentRequest: Identifiable, Codable, Equatable {
+    public let id: UUID
+    public let clientId: String
+    public let redirectURL: URL
+    public let callbackURL: URL
+    public let scopes: [HSBCScope]
+    public let merchantCategories: [String]
+    public let validityDays: Int
+
+    public init(
+        id: UUID = UUID(),
+        clientId: String,
+        redirectURL: URL,
+        callbackURL: URL,
+        scopes: [HSBCScope],
+        merchantCategories: [String],
+        validityDays: Int
+    ) {
+        self.id = id
+        self.clientId = clientId
+        self.redirectURL = redirectURL
+        self.callbackURL = callbackURL
+        self.scopes = scopes
+        self.merchantCategories = merchantCategories
+        self.validityDays = validityDays
+    }
+}
+
+public struct CoffeeShop: Identifiable, Codable, Equatable {
+    public let id: UUID
+    public let name: String
+    public let distanceMeters: Int
+    public let rating: Double
+    public let estimatedPickupMinutes: Int
+    public let brandColorHex: String
+    public let menu: [CoffeeItem]
+
+    public init(
+        id: UUID = UUID(),
+        name: String,
+        distanceMeters: Int,
+        rating: Double,
+        estimatedPickupMinutes: Int,
+        brandColorHex: String,
+        menu: [CoffeeItem]
+    ) {
+        self.id = id
+        self.name = name
+        self.distanceMeters = distanceMeters
+        self.rating = rating
+        self.estimatedPickupMinutes = estimatedPickupMinutes
+        self.brandColorHex = brandColorHex
+        self.menu = menu
+    }
+}
+
+public struct CoffeeItem: Identifiable, Codable, Equatable {
+    public let id: UUID
+    public let name: String
+    public let detail: String
+    public let price: Decimal
+    public let currencyCode: String
+    public let caffeineLevel: CaffeineLevel
+
+    public init(
+        id: UUID = UUID(),
+        name: String,
+        detail: String,
+        price: Decimal,
+        currencyCode: String,
+        caffeineLevel: CaffeineLevel
+    ) {
+        self.id = id
+        self.name = name
+        self.detail = detail
+        self.price = price
+        self.currencyCode = currencyCode
+        self.caffeineLevel = caffeineLevel
+    }
+}
+
+public enum CaffeineLevel: String, Codable, Equatable {
+    case low
+    case medium
+    case high
+}
+
+public struct CoffeeOrder: Identifiable, Codable, Equatable {
+    public let id: UUID
+    public let shop: CoffeeShop
+    public let item: CoffeeItem
+    public var size: CoffeeSize
+    public var quantity: Int
+    public var status: OrderStatus
+
+    public init(
+        id: UUID = UUID(),
+        shop: CoffeeShop,
+        item: CoffeeItem,
+        size: CoffeeSize,
+        quantity: Int,
+        status: OrderStatus = .draft
+    ) {
+        self.id = id
+        self.shop = shop
+        self.item = item
+        self.size = size
+        self.quantity = quantity
+        self.status = status
+    }
+
+    public var total: Decimal {
+        item.price * Decimal(quantity)
+    }
+}
+
+public enum CoffeeSize: String, Codable, CaseIterable, Equatable {
+    case tall = "Tall"
+    case grande = "Grande"
+    case venti = "Venti"
+}
+
+public enum OrderStatus: String, Codable, Equatable {
+    case draft
+    case awaitingConfirmation
+    case verifyingFace
+    case paying
+    case paid
+    case failed
+}
+
+public struct PaymentReceipt: Identifiable, Codable, Equatable {
+    public let id: UUID
+    public let paymentReference: String
+    public let orderId: UUID
+    public let amount: Decimal
+    public let currencyCode: String
+    public let paidAt: Date
+}
+
+public struct ChatMessage: Identifiable, Codable, Equatable {
+    public let id: UUID
+    public let role: ChatRole
+    public let text: String
+    public let createdAt: Date
+    public let attachment: ChatAttachment?
+
+    public init(
+        id: UUID = UUID(),
+        role: ChatRole,
+        text: String,
+        createdAt: Date = Date(),
+        attachment: ChatAttachment? = nil
+    ) {
+        self.id = id
+        self.role = role
+        self.text = text
+        self.createdAt = createdAt
+        self.attachment = attachment
+    }
+}
+
+public enum ChatRole: String, Codable, Equatable {
+    case user
+    case assistant
+    case system
+}
+
+public enum ChatAttachment: Codable, Equatable {
+    case bindHSBCCard(ConsentRequest)
+    case shopCarousel([CoffeeShop])
+    case orderCard(CoffeeOrder)
+    case paymentReceipt(PaymentReceipt)
+}
+
+public struct ConsentApproval: Codable, Equatable {
+    public let request: ConsentRequest
+    public let accountMask: String
+    public let approvedAt: Date
+
+    public init(request: ConsentRequest, accountMask: String, approvedAt: Date = Date()) {
+        self.request = request
+        self.accountMask = accountMask
+        self.approvedAt = approvedAt
+    }
+}

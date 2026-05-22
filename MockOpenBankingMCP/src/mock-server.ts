@@ -36,6 +36,62 @@ const handlers: Record<string, ToolHandler> = {
     };
   },
 
+  async hsbc_get_portfolio_summary(input) {
+    return {
+      consentId: input.consentId,
+      a2ui: {
+        component: "portfolioSummary",
+        version: "1.0",
+        props: {
+          currencyCode: "CNY",
+          totalValue: 301790.50,
+          categories: [
+            { name: "Funds&Related", percentage: 62.51, value: 188640.50, colorHex: "#D63622" },
+            { name: "AMP&Trust", percentage: 4.24, value: 12780.00, colorHex: "#E34B38" },
+            { name: "WMP", percentage: 2.76, value: 8340.00, colorHex: "#FF6F59" },
+            { name: "QDII Bond", percentage: 1.74, value: 5240.00, colorHex: "#F3B7AE" },
+            { name: "QDII Structured Note", percentage: 1.21, value: 3650.00, colorHex: "#4C474A" },
+            { name: "Structured Deposits", percentage: 3.73, value: 11250.00, colorHex: "#6D686B" },
+            { name: "Insurance", percentage: 9.71, value: 29300.00, colorHex: "#AAA5A8" },
+            { name: "Cash/Deposits", percentage: 14.11, value: 42590.00, colorHex: "#E3DFE0" }
+          ]
+        }
+      }
+    };
+  },
+
+  async hsbc_get_top_funds(input) {
+    return {
+      consentId: input.consentId,
+      a2ui: {
+        component: "topFunds",
+        version: "1.0",
+        props: {
+          title: "Top 3 funds",
+          funds: [
+            {
+              name: "AB SICAV I - LOW VOLATILITY EQUITY PORTFOLIO CLASS AD S...",
+              code: "U43120",
+              oneYearReturn: 54.79
+            },
+            {
+              name: "HANG SENG INDEX FUND CLASS A (HKD)",
+              code: "U42272",
+              badge: "ESG",
+              oneYearReturn: 18.10
+            },
+            {
+              name: "ALLIANZ INCOME AND GROWTH CLASS AM DIS (HKD MONTHLY...",
+              code: "U40032",
+              badge: "New fund",
+              oneYearReturn: 11.45
+            }
+          ]
+        }
+      }
+    };
+  },
+
   async commerce_create_coffee_order(input) {
     return {
       orderId: crypto.randomUUID(),

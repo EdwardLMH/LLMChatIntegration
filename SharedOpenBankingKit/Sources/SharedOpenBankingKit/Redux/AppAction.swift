@@ -7,6 +7,8 @@ public enum AppAction: Equatable {
     case openHSBCAppRequested
     case hsbcAppReturned(Result<OAuthToken, AppError>)
     case handleIncomingURL(URL)
+    case showPortfolio
+    case showTopFunds
     case startCoffeeJourney
     case shopsLoaded([CoffeeShop])
     case selectShop(CoffeeShop)

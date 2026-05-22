@@ -59,7 +59,7 @@ struct FaceVerificationView: View {
             Text("HSBC Facial Verification")
                 .font(.title3.weight(.semibold))
 
-            Text("Verify your face before ChatGPT submits this coffee payment with your HSBC consent token.")
+            Text("Verify your face before ChatGPTCoffee submits this coffee payment with your HSBC consent token.")
                 .font(.subheadline)
                 .multilineTextAlignment(.center)
                 .foregroundStyle(AppTheme.muted)

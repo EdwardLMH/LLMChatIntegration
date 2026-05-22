@@ -104,9 +104,9 @@ private struct EmptyBankingState: View {
             Image(systemName: "link.badge.plus")
                 .font(.title)
                 .foregroundStyle(AppTheme.hsbcRed)
-            Text("Waiting for ChatGPT")
+            Text("Waiting for ChatGPTCoffee")
                 .font(.headline)
-            Text("Open this mock app from the ChatGPT-like app to review consent, verify face, and issue a mock OAuth token.")
+            Text("Open this mock app from ChatGPTCoffee to review consent, verify face, and issue a mock OAuth token.")
                 .font(.subheadline)
                 .foregroundStyle(AppTheme.muted)
         }
@@ -123,7 +123,7 @@ private struct ConsentReviewCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Label("ChatGPT Coffee wants HSBC consent", systemImage: "checkmark.shield")
+            Label("ChatGPTCoffee wants HSBC consent", systemImage: "checkmark.shield")
                 .font(.headline)
                 .foregroundStyle(AppTheme.ink)
 

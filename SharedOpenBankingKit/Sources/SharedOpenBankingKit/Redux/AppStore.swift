@@ -59,11 +59,33 @@ public final class AppStore: ObservableObject {
             switch result {
             case let .success(token):
                 state.consentStatus = .connected(token)
-                appendAssistant("HSBC is connected. Consent \(token.consentId.uuidString.prefix(8)) is active for coffee payments after explicit confirmation.")
+                appendAssistant("HSBC is connected. Consent \(token.consentId.uuidString.prefix(8)) is active. You can ask about your portfolio, top funds, or continue to coffee when you are ready.")
             case let .failure(error):
                 state.consentStatus = .failed(error.message)
                 state.errorMessage = error.message
             }
+
+        case .showPortfolio:
+            guard case .connected = state.consentStatus else {
+                appendAssistant("Please bind HSBC first, then I can show your portfolio.")
+                return
+            }
+            state.selectedJourney = .wealth
+            appendAssistant(
+                "Sure. Here is your HSBC portfolio summary.",
+                attachment: .portfolioSummary(SeedData.portfolioSummary)
+            )
+
+        case .showTopFunds:
+            guard case .connected = state.consentStatus else {
+                appendAssistant("Please bind HSBC first, then I can show top funds.")
+                return
+            }
+            state.selectedJourney = .wealth
+            appendAssistant(
+                "Here are the top 3 funds for you.",
+                attachment: .topFunds(SeedData.topFunds)
+            )
 
         case .startCoffeeJourney:
             state.selectedJourney = .coffeeOrder
@@ -149,14 +171,20 @@ public final class AppStore: ObservableObject {
 
     private func routeUserMessage(_ text: String) {
         let normalized = text.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-        if normalized.contains("bind") || normalized.contains("hsbc") {
+        if normalized.contains("bind") || normalized.contains("connect hsbc") || normalized.contains("use hsbc") {
             reduce(.startHSBCBinding)
+        } else if normalized.contains("portfolio") || normalized.contains("profollio") || normalized.contains("portfollio") {
+            reduce(.showPortfolio)
+        } else if normalized.contains("top fund") || normalized.contains("top funds") || normalized.contains("top 3 fund") || normalized.contains("fund list") {
+            reduce(.showTopFunds)
         } else if normalized.contains("coffee") || normalized.contains("tired") {
             reduce(.startCoffeeJourney)
         } else if normalized == "confirm" || normalized.contains("pay") {
             reduce(.confirmPayment)
+        } else if normalized.contains("great") && normalized.contains("drink") {
+            reduce(.startCoffeeJourney)
         } else {
-            appendAssistant("I can help bind HSBC or find coffee nearby.")
+            appendAssistant("I can help bind HSBC, show your portfolio, show top funds, or find coffee nearby.")
         }
     }
 

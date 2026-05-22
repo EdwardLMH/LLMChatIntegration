@@ -1,6 +1,6 @@
 # Scenario Routing Rules
 
-These rules describe how ChatGPT should decide which MCP tools to call. HSBC developers provide this MCP layer so ChatGPT can map user intent to Open Banking, commerce, travel, and HSBC DSP Authorization Agent APIs.
+These rules describe how ChatGPTCoffee should decide which MCP tools to call. HSBC developers provide this MCP layer so ChatGPTCoffee can map user intent to Open Banking, wealth, commerce, travel, and HSBC DSP Authorization Agent APIs.
 
 ## Consent Journey
 
@@ -20,6 +20,31 @@ Assistant behavior:
 - Show the authorization link/card.
 - Do not claim payment is possible until a valid token/consent exists.
 
+## Wealth A2UI Journey
+
+Trigger examples:
+
+- "What is my portfolio?"
+- "What is my profollio?"
+- "What is my portfollio?"
+- "Show my holdings."
+- "What are my top funds?"
+- "Show my top 3 funds."
+
+Tool flow:
+
+1. `hsbc_get_portfolio_summary` for portfolio or holdings questions.
+2. Return `a2ui.component = "portfolioSummary"` with non-zero category values and a larger `Funds&Related` allocation.
+3. ChatGPTCoffee renders the `PortfolioSummaryCard` inside the chat transcript.
+4. `hsbc_get_top_funds` for top funds or fund ranking questions.
+5. Return `a2ui.component = "topFunds"` with a rendered top-3 fund list.
+6. ChatGPTCoffee renders the `TopFundsCard` inside the chat transcript.
+
+Assistant behavior:
+
+- Require active HSBC consent before showing account-derived wealth data.
+- Treat A2UI payloads as render instructions, not plain assistant prose.
+
 ## Coffee Journey
 
 Trigger examples:
@@ -27,6 +52,7 @@ Trigger examples:
 - "I am tired, I want coffee."
 - "Find nearby Starbucks."
 - "Order Luckin coffee."
+- "It is great, I want to drink one coffee."
 
 Tool flow:
 
@@ -78,7 +104,7 @@ Tool flow:
 
 ## DSP Authorization Agent
 
-`hsbc_dsp_authorize_payment` represents HSBC Digital Security Platform as a payment authorization agent. ChatGPT calls it through MCP after the user confirms the visible order or booking summary.
+`hsbc_dsp_authorize_payment` represents HSBC Digital Security Platform as a payment authorization agent. ChatGPTCoffee calls it through MCP after the user confirms the visible order or booking summary.
 
 DSP responsibilities:
 
@@ -87,7 +113,7 @@ DSP responsibilities:
 - Require facial verification when the risk policy demands step-up authentication.
 - Return a `dspAuthorizationId` that binds the user confirmation, biometric assertion, and payment quote.
 
-Open Banking payment submission must use the `dspAuthorizationId`. ChatGPT should not treat the OAuth token alone as permission to complete a payment.
+Open Banking payment submission must use the `dspAuthorizationId`. ChatGPTCoffee should not treat the OAuth token alone as permission to complete a payment.
 
 ## Safety Rules
 

@@ -2,7 +2,7 @@
   "server": {
     "name": "hsbc-commerce-dsp-mcp",
     "version": "0.1.0",
-    "description": "MCP tool layer provided by HSBC developers for ChatGPT shopping, travel, Open Banking consent, and HSBC DSP Authorization Agent payment journeys."
+    "description": "MCP tool layer provided by HSBC developers for ChatGPTCoffee shopping, wealth, Open Banking consent, A2UI rendering, and HSBC DSP Authorization Agent payment journeys."
   },
   "tools": [
     {
@@ -37,6 +37,105 @@
           "locationHint": { "type": "string" },
           "mood": { "type": "string" },
           "weatherSummary": { "type": "string" }
+        }
+      }
+    },
+    {
+      "name": "hsbc_get_portfolio_summary",
+      "description": "Use after HSBC consent is connected when the user asks for their portfolio, holdings, assets, or misspells portfolio as profollio/portfollio. Returns an Agent-to-UI component payload for the ChatGPTCoffee chat window.",
+      "input_schema": {
+        "type": "object",
+        "required": ["consentId"],
+        "properties": {
+          "consentId": { "type": "string" },
+          "currencyCode": {
+            "type": "string",
+            "default": "CNY"
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "required": ["a2ui"],
+        "properties": {
+          "a2ui": {
+            "type": "object",
+            "required": ["component", "version", "props"],
+            "properties": {
+              "component": { "type": "string", "enum": ["portfolioSummary"] },
+              "version": { "type": "string" },
+              "props": {
+                "type": "object",
+                "required": ["currencyCode", "totalValue", "categories"],
+                "properties": {
+                  "currencyCode": { "type": "string" },
+                  "totalValue": { "type": "number" },
+                  "categories": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": ["name", "percentage", "value", "colorHex"],
+                      "properties": {
+                        "name": { "type": "string" },
+                        "percentage": { "type": "number" },
+                        "value": { "type": "number" },
+                        "colorHex": { "type": "string" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "hsbc_get_top_funds",
+      "description": "Use after HSBC consent is connected when the user asks for top funds, top 3 funds, top performers, fund ranking, or investment ideas. Returns an Agent-to-UI component payload for the ChatGPTCoffee chat window.",
+      "input_schema": {
+        "type": "object",
+        "required": ["consentId"],
+        "properties": {
+          "consentId": { "type": "string" },
+          "category": {
+            "type": "string",
+            "default": "Top performers"
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "required": ["a2ui"],
+        "properties": {
+          "a2ui": {
+            "type": "object",
+            "required": ["component", "version", "props"],
+            "properties": {
+              "component": { "type": "string", "enum": ["topFunds"] },
+              "version": { "type": "string" },
+              "props": {
+                "type": "object",
+                "required": ["title", "funds"],
+                "properties": {
+                  "title": { "type": "string" },
+                  "funds": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": ["name", "code", "oneYearReturn"],
+                      "properties": {
+                        "name": { "type": "string" },
+                        "code": { "type": "string" },
+                        "badge": { "type": "string" },
+                        "oneYearReturn": { "type": "number" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
         }
       }
     },

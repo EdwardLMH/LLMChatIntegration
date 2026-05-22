@@ -2,6 +2,7 @@ import Foundation
 
 public enum Journey: String, Codable, Equatable {
     case hsbcConsent
+    case wealth
     case coffeeOrder
 }
 
@@ -192,6 +193,85 @@ public struct PaymentReceipt: Identifiable, Codable, Equatable {
     public let paidAt: Date
 }
 
+public struct PortfolioSummary: Identifiable, Codable, Equatable {
+    public let id: UUID
+    public let currencyCode: String
+    public let totalValue: Decimal
+    public let categories: [PortfolioCategory]
+
+    public init(
+        id: UUID = UUID(),
+        currencyCode: String,
+        totalValue: Decimal,
+        categories: [PortfolioCategory]
+    ) {
+        self.id = id
+        self.currencyCode = currencyCode
+        self.totalValue = totalValue
+        self.categories = categories
+    }
+}
+
+public struct PortfolioCategory: Identifiable, Codable, Equatable {
+    public let id: UUID
+    public let name: String
+    public let percentage: Double
+    public let value: Decimal
+    public let colorHex: String
+
+    public init(
+        id: UUID = UUID(),
+        name: String,
+        percentage: Double,
+        value: Decimal,
+        colorHex: String
+    ) {
+        self.id = id
+        self.name = name
+        self.percentage = percentage
+        self.value = value
+        self.colorHex = colorHex
+    }
+}
+
+public struct TopFundsList: Identifiable, Codable, Equatable {
+    public let id: UUID
+    public let title: String
+    public let funds: [TopFund]
+
+    public init(
+        id: UUID = UUID(),
+        title: String,
+        funds: [TopFund]
+    ) {
+        self.id = id
+        self.title = title
+        self.funds = funds
+    }
+}
+
+public struct TopFund: Identifiable, Codable, Equatable {
+    public let id: UUID
+    public let name: String
+    public let code: String
+    public let badge: String?
+    public let oneYearReturn: Double
+
+    public init(
+        id: UUID = UUID(),
+        name: String,
+        code: String,
+        badge: String?,
+        oneYearReturn: Double
+    ) {
+        self.id = id
+        self.name = name
+        self.code = code
+        self.badge = badge
+        self.oneYearReturn = oneYearReturn
+    }
+}
+
 public struct DSPPaymentAuthorization: Identifiable, Codable, Equatable {
     public let id: UUID
     public let quoteId: UUID
@@ -256,6 +336,8 @@ public enum ChatRole: String, Codable, Equatable {
 
 public enum ChatAttachment: Codable, Equatable {
     case bindHSBCCard(ConsentRequest)
+    case portfolioSummary(PortfolioSummary)
+    case topFunds(TopFundsList)
     case shopCarousel([CoffeeShop])
     case orderCard(CoffeeOrder)
     case paymentReceipt(PaymentReceipt)

@@ -31,7 +31,7 @@ struct ChatView: View {
                     onSend: sendCurrentMessage
                 )
             }
-            .navigationTitle("ChatGPT x HSBC")
+            .navigationTitle("ChatGPTCoffee x HSBC")
             .toolbarTitleDisplayMode(.inline)
             .safeAreaInset(edge: .top) {
                 JourneyStatusBar()
@@ -117,6 +117,10 @@ private struct AttachmentView: View {
         switch attachment {
         case let .bindHSBCCard(request):
             BindHSBCCard(request: request)
+        case let .portfolioSummary(portfolio):
+            PortfolioSummaryCard(portfolio: portfolio)
+        case let .topFunds(funds):
+            TopFundsCard(fundsList: funds)
         case let .shopCarousel(shops):
             ShopCarousel(shops: shops)
         case let .orderCard(order):

@@ -2,9 +2,9 @@
 
 ## Purpose
 
-This prototype demonstrates how a ChatGPT-like iOS app can partner with HSBC to support conversational shopping while keeping banking consent, OAuth token issuance, biometric verification, DSP authorization, and payment execution inside clearly separated trust boundaries.
+This prototype demonstrates how ChatGPTCoffee can partner with HSBC to support conversational wealth and shopping journeys while keeping banking consent, OAuth token issuance, biometric verification, DSP authorization, and payment execution inside clearly separated trust boundaries.
 
-The current implementation focuses on coffee ordering first, while the MCP mock also defines hotel and flight scenarios so HSBC developers can describe when ChatGPT should call each API.
+The current implementation supports account binding, A2UI wealth cards, and coffee ordering, while the MCP mock also defines hotel and flight scenarios so HSBC developers can describe when ChatGPTCoffee should call each API.
 
 ## System Overview
 
@@ -16,22 +16,23 @@ For standalone component and sequence diagrams, see [DIAGRAMS.md](DIAGRAMS.md).
 flowchart LR
     User[Customer]
 
-    subgraph ChatGPT[ChatGPT Experience]
-        ChatUI[ChatGPT-like iOS App]
-        Conversation[Conversation Orchestration]
-        Cards[Shopping Cards<br/>shops, menus, orders, receipts]
+    subgraph ChatGPT[ChatGPTCoffee Experience]
+        ChatUI[ChatGPTCoffee iOS App<br/>ChatGPTCoffeeApp]
+        AppStore[AppStore<br/>Redux state + routing]
+        Cards[Chat Attachments + A2UI<br/>bind, portfolio, top funds, shops, order, receipt]
+        FaceSheet[FaceVerificationView sheet<br/>payment biometric step-up]
     end
 
     subgraph HSBCMobile[HSBC Mobile Banking]
-        ConsentUI[Consent Review]
-        BankFace[HSBC Facial Authentication]
-        TokenIssuer[OAuth Token Issuance]
+        ConsentUI[ConsentReviewCard<br/>scope review + approve/decline]
+        BankFace[BankingFaceVerificationView<br/>consent biometric]
+        TokenIssuer[MockOAuthTokenIssuer<br/>OAuth token issuance]
     end
 
     subgraph HSBCMCP[HSBC Developer MCP Layer]
-        ScenarioRouter[Scenario Routing Rules]
-        ToolCatalog[MCP Tool Catalog]
-        ToolExecutor[MCP Tool Executor]
+        ScenarioRouter[Scenario Routing Rules<br/>docs/scenario-routing.md]
+        ToolCatalog[MCP Tool Catalog<br/>mcp-tools.json]
+        MockServer[Mock Server<br/>src/mock-server.ts]
     end
 
     subgraph PartnerAPIs[Partner Commerce APIs]
@@ -42,32 +43,30 @@ flowchart LR
 
     subgraph HSBCPlatform[HSBC Platform APIs]
         OpenBanking[Open Banking APIs<br/>consent, token, quote, payment]
-        DSP[HSBC DSP Authorization Agent<br/>risk, step-up, authorization]
+        DSP[HSBC DSP Authorization Agent<br/>risk, step-up, dspAuthorizationId]
     end
 
     User --> ChatUI
-    ChatUI --> Conversation
-    Conversation --> Cards
-    ChatUI -- bind account deep link --> ConsentUI
+    ChatUI --> AppStore
+    AppStore --> Cards
+    AppStore --> FaceSheet
+    ChatUI -- hsbc-mobile://open-banking/consent --> ConsentUI
     ConsentUI --> BankFace
     BankFace --> TokenIssuer
-    TokenIssuer -- OAuth callback --> ChatUI
+    TokenIssuer -- chatgpt://hsbc/consent-callback --> ChatUI
 
-    Conversation -- tool calls --> HSBCMCP
-    ScenarioRouter --> ToolCatalog --> ToolExecutor
-    ToolExecutor --> PartnerAPIs
-    ToolExecutor --> OpenBanking
-    ToolExecutor --> DSP
+    AppStore -. future: tool calls .- HSBCMCP
+    ScenarioRouter --> ToolCatalog --> MockServer
+    MockServer -. production replacement .- PartnerAPIs
+    MockServer -. production replacement .- OpenBanking
+    MockServer -. production replacement .- DSP
     DSP -- dspAuthorizationId --> OpenBanking
-    OpenBanking -- payment result --> ToolExecutor
-    ToolExecutor -- tool results --> Conversation
-    Conversation --> ChatUI
 ```
 
 ```mermaid
 flowchart LR
     User[User]
-    ChatApp[ChatGPTCoffeeApp<br/>ChatGPT-like iOS app]
+    ChatApp[ChatGPTCoffeeApp<br/>iOS chat app]
     BankApp[HSBCBankingMockApp<br/>HSBC mobile banking mock]
     Shared[SharedOpenBankingKit<br/>SwiftUI + Redux + models]
     MCP[MockOpenBankingMCP<br/>HSBC developer MCP contract]
@@ -78,8 +77,8 @@ flowchart LR
     User --> ChatApp
     ChatApp --> Shared
     BankApp --> Shared
-    ChatApp -- custom URL --> BankApp
-    BankApp -- callback URL with OAuth token --> ChatApp
+    ChatApp -- "hsbc-mobile://open-banking/consent?..." --> BankApp
+    BankApp -- "chatgpt://hsbc/consent-callback?..." --> ChatApp
     ChatApp -. future backend integration .-> MCP
     MCP --> Commerce
     MCP --> OpenBanking
@@ -91,7 +90,7 @@ flowchart LR
 
 | Area | Path | Responsibility |
 | --- | --- | --- |
-| ChatGPT-like iOS app | `ChatGPTCoffeeApp/` | Native app shell that hosts the chat shopping experience. |
+| ChatGPTCoffee iOS app | `ChatGPTCoffeeApp/` | Native app shell that hosts the chat wealth and shopping experience. |
 | HSBC banking mock app | `HSBCBankingMockApp/` | Native app shell that handles consent review, facial verification, and OAuth token callback. |
 | Shared Swift package | `SharedOpenBankingKit/` | SwiftUI views, Redux-style state management, domain models, routing, and mock services. |
 | MCP/backend mock | `MockOpenBankingMCP/` | OpenAPI contracts, MCP tool schemas, scenario routing rules, and TypeScript mock handlers. |
@@ -100,11 +99,11 @@ flowchart LR
 
 | Boundary | What It Owns | Current Mock |
 | --- | --- | --- |
-| ChatGPT-like app | Conversation, shop browsing, order card, explicit user confirmation, payment initiation. | `AppStore`, `ChatView`, `CoffeeViews`. |
+| ChatGPTCoffee app | Conversation, A2UI wealth cards, shop browsing, order card, explicit user confirmation, payment initiation. | `AppStore`, `ChatView`, `WealthViews`, `CoffeeViews`. |
 | HSBC mobile banking app | Account consent, facial authentication for consent, OAuth token issuance. | `BankingAppStore`, `BankingRootView`, `MockOAuthTokenIssuer`. |
 | HSBC Open Banking | Consent creation, OAuth token exchange, payment quote, final payment submission. | `MockConsentService`, `MockPaymentService`, `hsbc-openbanking.yaml`. |
 | HSBC DSP Authorization Agent | Payment risk decision, step-up biometric requirement, one-payment authorization reference. | `DSPAuthorizationServicing`, `MockDSPAuthorizationService`, `hsbc_dsp_authorize_payment`. |
-| HSBC developer MCP | Tool definitions and scenario guidance so ChatGPT knows which API to call for each user intent. | `mcp-tools.json`, `docs/scenario-routing.md`, `src/mock-server.ts`. |
+| HSBC developer MCP | Tool definitions, A2UI payloads, and scenario guidance so ChatGPTCoffee knows which API to call and which UI component to render for each user intent. | `mcp-tools.json`, `docs/scenario-routing.md`, `src/mock-server.ts`. |
 
 ## Journey 1: Bind HSBC Account
 
@@ -113,28 +112,40 @@ User intent: "I want to bind my HSBC account."
 ```mermaid
 sequenceDiagram
     actor User
-    participant Chat as ChatGPTCoffeeApp
+    participant RootView as RootView (ChatApp)
+    participant Chat as ChatView
     participant Store as AppStore
     participant Consent as MockConsentService
-    participant HSBC as HSBCBankingMockApp
+    participant HSBC as BankingRootView (HSBCApp)
+    participant BankStore as BankingAppStore
     participant Token as MockOAuthTokenIssuer
 
     User->>Chat: I want to bind my HSBC account
-    Chat->>Store: sendMessage
+    Chat->>Store: send(.sendMessage)
+    Store->>Store: routeUserMessage detects "bind" or "hsbc"
     Store->>Consent: createConsentRequest()
-    Consent-->>Store: ConsentRequest
-    Store-->>Chat: bind HSBC card with Open HSBC action
-    User->>Chat: Tap Open HSBC
-    Chat->>HSBC: hsbc-mobile://open-banking/consent
-    HSBC->>HSBC: Parse ConsentRequest
-    HSBC-->>User: Review scopes and merchant categories
-    User->>HSBC: Approve consent
-    HSBC->>HSBC: Facial verification
-    HSBC->>Token: issueToken(ConsentApproval)
-    Token-->>HSBC: OAuthToken
-    HSBC->>Chat: chatgpt://hsbc/consent-callback
-    Chat->>Store: handleIncomingURL
-    Store-->>Chat: consentStatus = connected(OAuthToken)
+    Consent-->>Store: ConsentRequest (scopes, redirectURL, callbackURL)
+    Store-->>Chat: Append BindHSBCCard with "Open HSBC" action
+    User->>Chat: Tap "Open HSBC"
+    Chat->>Store: send(.openHSBCAppRequested)
+    Store->>Store: hsbcDeepLinkToOpen = request.redirectURL, consentStatus = .authorizing
+    RootView->>HSBC: openURL(hsbc-mobile://open-banking/consent?...)
+    HSBC->>BankStore: send(.handleIncomingURL(url))
+    BankStore->>BankStore: AppURLRouter → .hsbcConsent(ConsentRequest), pendingRequest set
+    HSBC-->>User: Show ConsentReviewCard (scopes, Authorize / Decline)
+    User->>HSBC: Tap "Authorize"
+    HSBC->>BankStore: send(.approveConsentTapped)
+    BankStore->>BankStore: isShowingFaceVerification = true
+    HSBC-->>User: Show BankingFaceVerificationView sheet
+    User->>HSBC: Tap "Verify & Authorize"
+    HSBC->>BankStore: send(.faceVerificationCompleted(true))
+    BankStore->>Token: issueToken(for: ConsentApproval)
+    Token-->>BankStore: OAuthToken
+    BankStore->>BankStore: callbackURLToOpen set
+    HSBC->>RootView: openURL(chatgpt://hsbc/consent-callback?access_token=...&consent_id=...)
+    RootView->>Store: send(.handleIncomingURL(url))
+    Store->>Store: AppURLRouter → .chatConsentCallback(.success), consentStatus = .connected(token)
+    Store-->>Chat: Append "HSBC is connected" message
 ```
 
 Implementation notes:
@@ -151,14 +162,51 @@ Implementation notes:
   - `coffee-payment:submit`
   - `travel-payment:submit` for future hotel/flight journeys.
 
-## Journey 2: Coffee Discovery, Order, DSP Authorization, Payment
+## Journey 2: Wealth A2UI Cards
+
+User intents: "What is my profollio?" and "What are my top funds?"
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant Chat as ChatView
+    participant Store as AppStore
+    participant MCP as MockOpenBankingMCP
+    participant A2UI as A2UI Renderer
+
+    User->>Chat: What is my profollio?
+    Chat->>Store: send(.sendMessage)
+    Store->>Store: routeUserMessage detects "portfolio", "profollio", or "portfollio"
+    Store->>MCP: hsbc_get_portfolio_summary(consentId)
+    MCP-->>Store: a2ui.component = portfolioSummary
+    Store-->>Chat: ChatAttachment.portfolioSummary
+    Chat->>A2UI: Render PortfolioSummaryCard
+    User->>Chat: What are my top funds?
+    Chat->>Store: send(.sendMessage)
+    Store->>MCP: hsbc_get_top_funds(consentId)
+    MCP-->>Store: a2ui.component = topFunds
+    Store-->>Chat: ChatAttachment.topFunds
+    Chat->>A2UI: Render TopFundsCard
+    User->>Chat: It is great, I want to drink one coffee
+    Chat->>Store: send(.startCoffeeJourney)
+```
+
+Implementation notes:
+
+- A2UI means the agent returns a typed JSON UI payload, for example `a2ui.component = "portfolioSummary"` or `a2ui.component = "topFunds"`.
+- The Swift prototype renders those payloads as `ChatAttachment.portfolioSummary` and `ChatAttachment.topFunds` inside `ChatView`.
+- Portfolio values are non-zero and intentionally make `Funds&Related` the largest allocation for the prototype data set.
+- Wealth data requires connected HSBC consent before rendering.
+
+## Journey 3: Coffee Discovery, Order, DSP Authorization, Payment
 
 User intent: "I am tired, I want coffee."
 
 ```mermaid
 sequenceDiagram
     actor User
-    participant Chat as ChatGPTCoffeeApp
+    participant RootView as RootView (ChatApp)
+    participant Chat as ChatView
     participant Store as AppStore
     participant Weather as MockWeatherService
     participant Coffee as MockCoffeeService
@@ -166,27 +214,30 @@ sequenceDiagram
     participant Pay as MockPaymentService
 
     User->>Chat: I am tired, I want coffee
-    Chat->>Store: sendMessage
+    Chat->>Store: send(.sendMessage)
+    Store->>Store: routeUserMessage detects "coffee" or "tired"
+    Note over Store,Coffee: loadCoffeeShops() — sequential async calls
     Store->>Weather: currentWeatherSummary()
+    Weather-->>Store: "Cool and cloudy, 18C"
     Store->>Coffee: nearbyCoffeeShops()
     Coffee-->>Store: [CoffeeShop]
-    Store-->>Chat: Shop carousel in chat
-    User->>Chat: Select shop and menu item
-    Chat->>Store: selectShop / selectCoffee
-    User->>Chat: Press Order
-    Chat->>Store: createOrder
-    Store-->>Chat: Order card with Pay button
-    Chat-->>User: Weather-related coffee message and confirmation request
-    User->>Chat: Type confirm or tap Pay
-    Chat->>Store: confirmPayment
-    Store-->>Chat: Show facial verification
-    User->>Chat: Complete facial verification
-    Chat->>Store: faceVerificationCompleted(true)
-    Store->>DSP: authorizePayment(order, token, biometricAssertion)
-    DSP-->>Store: DSPPaymentAuthorization(decision: approved)
+    Store-->>Chat: ShopCarousel attachment in chat
+    User->>Chat: Tap menu item, then tap "Order" on ShopCard
+    Chat->>Store: send(.selectShop) + send(.selectCoffee) + send(.createOrder)
+    Store->>Store: CoffeeOrder(status: .awaitingConfirmation)
+    Store-->>Chat: OrderCard attachment + "Please confirm or tap Pay"
+    Chat-->>User: Weather-related message and confirmation prompt
+    User->>Chat: Type "confirm" or tap Pay on OrderCard
+    Chat->>Store: send(.confirmPayment)
+    Store->>Store: isShowingFaceVerification = true, order.status = .verifyingFace
+    RootView-->>User: Show FaceVerificationView sheet
+    User->>RootView: Tap "Verify & Pay"
+    RootView->>Store: send(.faceVerificationCompleted(true))
+    Store->>DSP: authorizePayment(order, token, biometricAssertion: "mock-face-assertion")
+    DSP-->>Store: DSPPaymentAuthorization(decision: .approved, riskScore: 18)
     Store->>Pay: pay(order, token)
     Pay-->>Store: PaymentReceipt
-    Store-->>Chat: Receipt card in chat
+    Store-->>Chat: ReceiptCard attachment in chat
 ```
 
 Current Swift mock behavior:
@@ -200,13 +251,15 @@ Current Swift mock behavior:
 
 ## MCP Tool Flow
 
-HSBC developers provide MCP tool definitions so ChatGPT can map user scenarios to API calls.
+HSBC developers provide MCP tool definitions so ChatGPTCoffee can map user scenarios to API calls and A2UI component payloads.
 
 ```mermaid
 flowchart TD
     Intent[User intent in chat]
     Router[Scenario routing rules<br/>provided by HSBC MCP]
     Consent[hsbc_create_consent_link]
+    Portfolio[hsbc_get_portfolio_summary<br/>A2UI portfolioSummary]
+    TopFunds[hsbc_get_top_funds<br/>A2UI topFunds]
     CoffeeSearch[commerce_search_coffee]
     CoffeeOrder[commerce_create_coffee_order]
     HotelSearch[travel_search_hotels]
@@ -221,6 +274,8 @@ flowchart TD
 
     Intent --> Router
     Router -->|bind HSBC| Consent
+    Router -->|portfolio| Portfolio
+    Router -->|top funds| TopFunds
     Router -->|coffee| CoffeeSearch --> CoffeeOrder --> Quote
     Router -->|hotel| HotelSearch --> HotelBooking --> Quote
     Router -->|flight| FlightSearch --> FlightBooking --> Quote
@@ -229,9 +284,11 @@ flowchart TD
 
 MCP tools currently defined:
 
-| Tool | When ChatGPT Should Use It |
+| Tool | When ChatGPTCoffee Should Use It |
 | --- | --- |
 | `hsbc_create_consent_link` | User wants to bind/connect HSBC or use HSBC for payment. |
+| `hsbc_get_portfolio_summary` | Connected user asks for portfolio, profollio, portfollio, holdings, or asset allocation; returns `portfolioSummary` A2UI. |
+| `hsbc_get_top_funds` | Connected user asks for top funds, top 3 funds, top performers, or fund ranking; returns `topFunds` A2UI. |
 | `commerce_search_coffee` | User wants coffee, caffeine, nearby cafes, Starbucks, Luckin, or drink recommendations. |
 | `commerce_create_coffee_order` | User selected a coffee shop and menu item. |
 | `travel_search_hotels` | User wants hotel/accommodation. |
@@ -266,16 +323,16 @@ flowchart LR
 
 Rules:
 
-- OAuth token means ChatGPT is allowed to call permitted HSBC APIs.
+- OAuth token means ChatGPTCoffee is allowed to call permitted HSBC APIs.
 - DSP authorization means this specific payment is approved.
-- ChatGPT must not submit payment based only on inferred user intent.
-- ChatGPT must show a visible order or booking summary before payment.
-- ChatGPT must require explicit confirmation, such as typing `confirm` or tapping Pay.
+- ChatGPTCoffee must not submit payment based only on inferred user intent.
+- ChatGPTCoffee must show a visible order or booking summary before payment.
+- ChatGPTCoffee must require explicit confirmation, such as typing `confirm` or tapping Pay.
 - Final payment submission must include a DSP authorization reference.
 
 ## Redux State and Actions
 
-The ChatGPT-like app uses a Redux-style store:
+ChatGPTCoffee uses a Redux-style store:
 
 ```mermaid
 stateDiagram-v2
@@ -284,6 +341,8 @@ stateDiagram-v2
     pendingRedirect --> authorizing: openHSBCAppRequested
     authorizing --> connected: hsbcAppReturned(success)
     authorizing --> failed: hsbcAppReturned(failure)
+    connected --> wealth: showPortfolio / showTopFunds
+    wealth --> coffeeOrder: startCoffeeJourney
     connected --> coffeeOrder: startCoffeeJourney
     coffeeOrder --> awaitingConfirmation: createOrder
     awaitingConfirmation --> verifyingFace: confirmPayment
@@ -295,6 +354,7 @@ Important state:
 
 - `consentStatus`: disconnected, pending redirect, authorizing, connected, or failed.
 - `messages`: chat history and assistant cards.
+- `PortfolioSummary`, `TopFundsList`: wealth A2UI data rendered in chat.
 - `shops`, `selectedShop`, `selectedItem`: coffee browsing state.
 - `currentOrder`: order summary and status.
 - `receipt`: payment result.
@@ -303,6 +363,7 @@ Important state:
 Important actions:
 
 - Consent: `startHSBCBinding`, `consentRequestCreated`, `openHSBCAppRequested`, `handleIncomingURL`, `hsbcAppReturned`.
+- Wealth: `showPortfolio`, `showTopFunds`.
 - Coffee: `startCoffeeJourney`, `shopsLoaded`, `selectShop`, `selectCoffee`, `createOrder`.
 - Payment: `confirmPayment`, `faceVerificationCompleted`, `paymentCompleted`.
 
@@ -310,13 +371,14 @@ Important actions:
 
 | Model | Purpose |
 | --- | --- |
-| `ConsentRequest` | Request sent from ChatGPT app to HSBC app for user consent. |
+| `ConsentRequest` | Request sent from ChatGPTCoffee to HSBC app for user consent. |
 | `OAuthToken` | Mock token returned after HSBC consent. Includes scopes, expiry, account mask, and consent ID. |
 | `HSBCScope` | Open Banking and DSP permissions. |
+| `PortfolioSummary`, `PortfolioCategory`, `TopFundsList`, `TopFund` | Wealth data returned through A2UI and rendered in chat. |
 | `CoffeeShop`, `CoffeeItem`, `CoffeeOrder` | Merchant discovery and order summary. |
 | `DSPPaymentAuthorization` | DSP decision for a specific payment quote/order. |
 | `PaymentReceipt` | Final paid transaction result. |
-| `ChatMessage`, `ChatAttachment` | Chat transcript plus rich cards for binding, shops, order, and receipt. |
+| `ChatMessage`, `ChatAttachment` | Chat transcript plus rich A2UI cards for binding, portfolio, top funds, shops, order, and receipt. |
 
 ## API Contracts
 

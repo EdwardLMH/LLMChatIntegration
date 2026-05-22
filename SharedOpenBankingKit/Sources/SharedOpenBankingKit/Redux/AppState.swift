@@ -6,7 +6,7 @@ public struct AppState: Equatable {
     public var hsbcDeepLinkToOpen: URL?
     public var selectedJourney: Journey = .hsbcConsent
     public var messages: [ChatMessage] = [
-        ChatMessage(role: .assistant, text: "Welcome to the ChatGPT x HSBC shopping experience. ChatGPT helps you discover nearby offers and place orders in conversation, while HSBC provides secure account consent, facial verification, and payment protection when you are ready to check out.")
+        ChatMessage(role: .assistant, text: "Welcome to the ChatGPTCoffee x HSBC shopping experience. You can bind your HSBC account here, discover nearby offers, and place orders in conversation, while HSBC provides secure account consent, facial verification, and payment protection when you are ready to check out.")
     ]
     public var shops: [CoffeeShop] = []
     public var selectedShop: CoffeeShop?
